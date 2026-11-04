@@ -1,0 +1,51 @@
+name: todo_list
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # — Smart Todo stack (ARCHITECTURE.md §1) —
+  drift: ^2.14.0            # SQLite on-device
+  provider: ^6.1.0          # state management
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.0
+  flutter_secure_storage: ^9.2.4 # API key Gemini (keystore Android, MASTER_SPEC §6)
+  http: ^1.2.0               # REST Gemini (google_generative_ai deprecated — FR-10 rotasi key)
+  speech_to_text: ^7.0.0     # STT on-device Bahasa Indonesia (MASTER_SPEC §4.2)
+  image_picker: ^1.1.2       # kamera/galeri (ARCHITECTURE §4.3)
+  file_selector: ^1.0.3      # pilih file (mode Foto)
+  flutter_image_compress: ^2.3.0 # kompres foto max 1280px q80 (ARCHITECTURE §4.3)
+  flutter_localizations:    # date picker berbahasa Indonesia
+    sdk: flutter
+  intl: ^0.20.0             # partner localizations
+  flutter_local_notifications: ^22.3.3
+  timezone: ^0.11.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # — codegen (drift) —
+  build_runner: 2.4.15
+  drift_dev: ^2.14.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
