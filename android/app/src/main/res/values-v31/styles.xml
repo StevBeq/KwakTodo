@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash Android 12+ (API 31+): sistem menampilkan ikon dari
+     windowSplashScreenAnimatedIcon — diarahkan ke logo Kwak, bukan
+     ikon launcher bawaan (DESIGN.md §1.2). -->
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">#FDF1E3</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/launch_logo_splash</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>

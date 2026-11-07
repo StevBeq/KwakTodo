@@ -107,171 +107,186 @@ class _DetailBody extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: AppRadius.sheet,
       ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              width: 48,
-              height: 6,
-              decoration: BoxDecoration(
-                color: AppColors.grabber,
-                borderRadius: AppRadius.chip,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                alignment: Alignment.center,
-                child: Icon(categoryIcon(task.category), size: 24, color: ink),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 18,
-                        height: 1.2,
-                        fontWeight: FontWeight.w800,
-                        decoration: task.isDone
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: task.isDone ? AppColors.muted : AppColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      sourceLabel(task.source),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              DetailChip(text: categoryLabels[task.category]!, bg: bg, fg: ink),
-              DetailChip(
-                icon: Icons.flag_rounded,
-                text: 'Prioritas ${priorityLabels[task.priority]!}',
-                bg: AppColors.dangerSoft,
-                fg: priorityInk,
-              ),
-              if (task.deadline != null)
-                DetailChip(
-                  icon: Icons.access_time,
-                  text: fmtDeadline(task.deadline!),
-                  bg: AppColors.primarySoft,
-                  fg: AppColors.primaryDark,
-                )
-              else
-                const DetailChip(
-                  text: 'Tanpa deadline',
-                  bg: AppColors.trackCream,
-                  fg: AppColors.muted,
-                ),
-              if (od)
-                const DetailChip(
-                  text: 'Overdue',
-                  bg: AppColors.danger,
-                  fg: AppColors.surface,
-                ),
-            ],
-          ),
-          if (task.notes != null && task.notes!.trim().isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'DESKRIPSI',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.muted,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.fieldFill,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                task.notes!,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.55,
-                  color: AppColors.ink,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: Semantics(
-                  identifier: 'task_detail_toggle_btn',
-                  button: true,
-                  child: ActionButton(
-                    label: task.isDone ? 'Buka Lagi' : 'Tandai Selesai',
-                    filled: !task.isDone,
-                    icon: task.isDone
-                        ? Icons.rotate_left_rounded
-                        : Icons.check_circle_outline,
-                    onTap: () => _toggle(context),
+              Center(
+                child: Container(
+                  width: 48,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: AppColors.grabber,
+                    borderRadius: AppRadius.chip,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Semantics(
-                  identifier: 'task_detail_edit_btn',
-                  button: true,
-                  child: ActionButton(
-                    label: 'Edit',
-                    filled: false,
-                    icon: Icons.edit,
-                    onTap: () => _openEdit(context),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      categoryIcon(task.category),
+                      size: 24,
+                      color: ink,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          task.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 18,
+                            height: 1.2,
+                            fontWeight: FontWeight.w800,
+                            decoration: task.isDone
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: task.isDone
+                                ? AppColors.muted
+                                : AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          sourceLabel(task.source),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  DetailChip(
+                    text: categoryLabels[task.category]!,
+                    bg: bg,
+                    fg: ink,
+                  ),
+                  DetailChip(
+                    icon: Icons.flag_rounded,
+                    text: 'Prioritas ${priorityLabels[task.priority]!}',
+                    bg: AppColors.dangerSoft,
+                    fg: priorityInk,
+                  ),
+                  if (task.deadline != null)
+                    DetailChip(
+                      icon: Icons.access_time,
+                      text: fmtDeadline(task.deadline!),
+                      bg: AppColors.primarySoft,
+                      fg: AppColors.primaryDark,
+                    )
+                  else
+                    const DetailChip(
+                      text: 'Tanpa deadline',
+                      bg: AppColors.trackCream,
+                      fg: AppColors.muted,
+                    ),
+                  if (od)
+                    const DetailChip(
+                      text: 'Overdue',
+                      bg: AppColors.danger,
+                      fg: AppColors.surface,
+                    ),
+                ],
+              ),
+              if (task.notes != null && task.notes!.trim().isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'DESKRIPSI',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.muted,
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Semantics(
-                identifier: 'task_detail_delete_btn',
-                button: true,
-                child: ActionButton(
-                  icon: Icons.delete_outline,
-                  tint: AppColors.danger,
-                  onTap: () => _delete(context),
+                const SizedBox(height: 6),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldFill,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    task.notes!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.55,
+                      color: AppColors.ink,
+                    ),
+                  ),
                 ),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      identifier: 'task_detail_toggle_btn',
+                      button: true,
+                      child: ActionButton(
+                        label: task.isDone ? 'Buka Lagi' : 'Tandai Selesai',
+                        filled: !task.isDone,
+                        icon: task.isDone
+                            ? Icons.rotate_left_rounded
+                            : Icons.check_circle_outline,
+                        onTap: () => _toggle(context),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Semantics(
+                      identifier: 'task_detail_edit_btn',
+                      button: true,
+                      child: ActionButton(
+                        label: 'Edit',
+                        filled: false,
+                        icon: Icons.edit,
+                        onTap: () => _openEdit(context),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Semantics(
+                    identifier: 'task_detail_delete_btn',
+                    button: true,
+                    child: ActionButton(
+                      icon: Icons.delete_outline,
+                      tint: AppColors.danger,
+                      onTap: () => _delete(context),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

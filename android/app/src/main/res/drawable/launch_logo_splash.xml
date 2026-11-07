@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ikon splash Android 12+: logo Kwak (drawable-nodpi) berukuran aman
+     dari masking lingkaran sistem. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="104dp"
+        android:height="104dp"
+        android:gravity="center"
+        android:drawable="@drawable/launch_logo" />
+</layer-list>

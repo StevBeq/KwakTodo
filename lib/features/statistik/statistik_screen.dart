@@ -10,14 +10,13 @@ import '../../core/utils/filters.dart';
 import '../../shared/providers/task_provider.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/progress_ring.dart';
-import '../../shared/widgets/round_back_button.dart';
 
 /// Layar Statistik — DESIGN.md §5.4: card ring + 3 StatCards, card
 /// Per Kategori (CategoryBar), card Deadline Minggu Ini (WeekBars).
 class StatistikScreen extends StatelessWidget {
-  const StatistikScreen({super.key, required this.onBack});
+  const StatistikScreen({super.key, this.onBack});
 
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -40,15 +39,9 @@ class StatistikScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                RoundBackButton(onTap: onBack),
-                const SizedBox(width: 12),
-                const Text(
-                  'Statistik',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                ),
-              ],
+            const Text(
+              'Statistik',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 20),
             Container(

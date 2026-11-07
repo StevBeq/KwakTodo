@@ -1,98 +1,100 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../notifikasi/notifikasi_screen.dart';
-import '../../core/notifications/notifier.dart';
-import '../../shared/providers/notif_provider.dart';
 import '../../shared/theme/app_theme.dart';
-import '../../shared/widgets/round_back_button.dart';
-import '../../shared/widgets/toast.dart';
-import 'api_keys_card.dart';
-import 'reminder_card.dart';
+import '../../shared/providers/settings_provider.dart';
+import 'package:provider/provider.dart';
+import 'api_keys_screen.dart';
+import 'notifikasi_settings_screen.dart';
+import 'reminder_screen.dart';
 
-/// Layar Pengaturan — design-reference.html (204–260): kartu API Key Gemini,
-/// Reminder Deadline (H-N + jam), Notifikasi (izin / kirim tes / inbox),
-/// kartu privasi, versi app.
+/// Layar Pengaturan — halaman ringkas: baris menu yang menyelam ke
+/// sub-layar masing-masing (Reminder / API Key / Notifikasi), lalu
+/// informasi privasi + versi. Konfigurasi detail tidak "terpampang"
+/// di depan — aman dan tumpukan kartunya pendek.
 class PengaturanScreen extends StatelessWidget {
-  const PengaturanScreen({super.key, required this.onBack});
+  const PengaturanScreen({super.key, this.onBack});
 
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
 
-  Future<void> _tesNotif(BuildContext context) async {
-    final notifProvider = context.read<NotifProvider>();
-    // Tampil sekarang (ARCHITECTURE §6) + tulis baris inbox.
-    await Notifier.showNow(
-      id: 9000001,
-      title: '🔔 Tes notifikasi',
-      body: 'Kalau ini muncul di inbox, jalur reminder kamu aman.',
-    );
-    await notifProvider.add(
-      title: '🔔 Tes notifikasi',
-      body: 'Kalau ini muncul di inbox, jalur reminder kamu aman.',
-    );
-    if (!context.mounted) return;
-    showAppToast(context, 'Notifikasi tes terkirim — cek inbox!');
+  void _open(BuildContext context, WidgetBuilder page) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (pageCtx) => page(pageCtx)));
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<SettingsProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  RoundBackButton(onTap: onBack),
-                  const SizedBox(width: 12),
                   const Text(
                     'Pengaturan',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                   ),
+                  const SizedBox(height: 20),
+                  _MenuCard(
+                    icon: Icons.notifications_active_rounded,
+                    title: 'Reminder Deadline',
+                    subtitle: s.remEnabled ? s.remRulesLabel : 'Tidak aktif',
+                    badge: _Badge(
+                      label: s.remEnabled ? 'ON' : 'OFF',
+                      on: s.remEnabled,
+                    ),
+                    onTap: () => _open(
+                      context,
+                      (_) =>
+                          ReminderScreen(onBack: () => Navigator.pop(context)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _MenuCard(
+                    icon: Icons.key_rounded,
+                    title: 'API Key Gemini',
+                    subtitle: 'Digeser ke halaman tersendiri biar aman',
+                    badge: const _SudahBadge(),
+                    onTap: () => _open(
+                      context,
+                      (_) =>
+                          ApiKeysScreen(onBack: () => Navigator.pop(context)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _MenuCard(
+                    icon: Icons.sms_outlined,
+                    title: 'Notifikasi',
+                    subtitle: 'Izin HP · tes · inbox notifikasi',
+                    badge: const _Badge(label: '3 opsi', on: false),
+                    onTap: () => _open(
+                      context,
+                      (_) => NotifikasiSettingsScreen(
+                        onBack: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _PrivacyCard(),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'KwakTodo v1.1 · AI Task Assistant',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: AppColors.muted),
+                  ),
                 ],
               ),
-              const SizedBox(height: 20),
-              const ApiKeysCard(),
-              const SizedBox(height: 16),
-              const ReminderCard(),
-              const SizedBox(height: 16),
-              _NotifRowCard(
-                onPermission: () async {
-                  // Runtime Android 13+ (ARCHITECTURE §6); ditolak → buka
-                  // Settings HP.
-                  final ok = await Notifier.requestDisplayPermission();
-                  if (!context.mounted) return;
-                  showAppToast(
-                    context,
-                    ok
-                        ? 'Izin notifikasi: aktif ✅'
-                        : 'Belum diberi izin '
-                              '— atur di Settings HP',
-                  );
-                },
-                onTest: () => _tesNotif(context),
-                onInbox: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (pageCtx) =>
-                        NotifikasiScreen(onBack: () => Navigator.pop(pageCtx)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _PrivacyCard(),
-              const SizedBox(height: 24),
-              const Text(
-                'KwakTodo v1.0 · AI Task Assistant',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: AppColors.muted),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -100,96 +102,79 @@ class PengaturanScreen extends StatelessWidget {
   }
 }
 
-class _NotifRowCard extends StatelessWidget {
-  const _NotifRowCard({
-    required this.onPermission,
-    required this.onTest,
-    required this.onInbox,
+/// Baris menu utama Pengaturan: ikon + judul + ringkasan + chevron.
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.badge,
+    required this.onTap,
   });
 
-  final VoidCallback onPermission;
-  final VoidCallback onTest;
-  final VoidCallback onInbox;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.card,
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.sms_outlined, size: 18, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text(
-                'Notifikasi',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _NotifButton(
-            icon: Icons.shield_rounded,
-            label: 'Izin notifikasi HP (Android / iOS)',
-            onTap: onPermission,
-          ),
-          const SizedBox(height: 8),
-          _NotifButton(
-            icon: Icons.send_outlined,
-            label: 'Kirim notifikasi tes',
-            onTap: onTest,
-          ),
-          const SizedBox(height: 8),
-          _NotifButton(
-            icon: Icons.inbox_outlined,
-            label: 'Lihat semua notifikasi masuk',
-            onTap: onInbox,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NotifButton extends StatelessWidget {
-  const _NotifButton({required this.icon, required this.label, this.onTap});
-
   final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
+  final String title;
+  final String subtitle;
+  final Widget badge;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.fieldFill,
-      borderRadius: BorderRadius.circular(12),
+      color: AppColors.surface,
+      borderRadius: AppRadius.card,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(icon, size: 14, color: AppColors.muted),
-              const SizedBox(width: 8),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 20, color: AppColors.primary),
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        badge,
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.muted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
               const Icon(
                 Icons.chevron_right_rounded,
-                size: 16,
+                size: 18,
                 color: AppColors.chevron,
               ),
             ],
@@ -200,6 +185,60 @@ class _NotifButton extends StatelessWidget {
   }
 }
 
+/// Chip status kecil utk baris menu (ON hijau / OFF abu / info neutral).
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label, this.on = false});
+
+  final String label;
+  final bool on;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: on
+            ? AppColors.success.withValues(alpha: .12)
+            : AppColors.fieldFill,
+        borderRadius: AppRadius.chip,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: on ? AppColors.success : AppColors.muted,
+        ),
+      ),
+    );
+  }
+}
+
+/// Penanda "tersamar / di halaman khusus" — primary-soft.
+class _SudahBadge extends StatelessWidget {
+  const _SudahBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.primarySoft,
+        borderRadius: AppRadius.chip,
+      ),
+      child: const Text(
+        'aman 🔒',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: AppColors.primaryDark,
+        ),
+      ),
+    );
+  }
+}
+
+/// Kartu kebijakan privasi (informasi penyimpanan lokal).
 class _PrivacyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

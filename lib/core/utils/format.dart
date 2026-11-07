@@ -48,6 +48,20 @@ String fmtMonthYear(DateTime d) {
 
 const _hari = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU', 'MINGGU'];
 
+/// Nama hari kapital di awal (Senin..Minggu) — preview aturan reminder.
+String namaHari(DateTime d) {
+  const penuh = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Minggu',
+  ];
+  return penuh[d.weekday - 1];
+}
+
 /// Overline SummaryCard: `MINGGU, 26 OKT 2026` (design-reference Beranda).
 String fmtHeaderDate(DateTime d) =>
     '${_hari[d.weekday - 1]}, ${d.day} ${_bulan[d.month - 1]} ${d.year}';

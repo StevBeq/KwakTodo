@@ -21,6 +21,48 @@ class GeminiService {
   final KeyRotator rotator;
   final http.Client _http = http.Client();
 
+  /// Validasi satu API key langsung ke endpoint models Google Gemini.
+  /// Memastikan key aktif, memiliki kuota, dan diakui Google sebelum disimpan.
+  static Future<({bool isValid, String? error})> validateApiKey(
+    String key, {
+    http.Client? client,
+  }) async {
+    final trimmed = key.trim();
+    if (trimmed.isEmpty) {
+      return (isValid: false, error: 'API key tidak boleh kosong');
+    }
+    final httpClient = client ?? http.Client();
+    try {
+      final resp = await httpClient.get(
+        Uri.https('generativelanguage.googleapis.com', '/v1beta/models'),
+        headers: {'x-goog-api-key': trimmed},
+      );
+      if (resp.statusCode == 200) {
+        return (isValid: true, error: null);
+      }
+      try {
+        final body =
+            jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+        final err = body['error'];
+        final msg = err is Map ? err['message']?.toString() : null;
+        return (isValid: false, error: msg ?? 'Status ${resp.statusCode}');
+      } catch (_) {
+        return (isValid: false, error: 'Status ${resp.statusCode}');
+      }
+    } on http.ClientException {
+      return (
+        isValid: false,
+        error: 'Gagal terhubung ke internet. Cek koneksi HP.',
+      );
+    } catch (e) {
+      return (isValid: false, error: 'Error: $e');
+    } finally {
+      if (client == null) {
+        httpClient.close();
+      }
+    }
+  }
+
   /// Dipakai tests untuk injeksi transport palsu.
   @visibleForTesting
   Future<Result<List<TaskDraft>>> send(

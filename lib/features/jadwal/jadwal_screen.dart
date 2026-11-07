@@ -10,16 +10,15 @@ import '../../shared/providers/task_provider.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/calendar_grid.dart';
 import '../../shared/widgets/empty_state.dart';
-import '../../shared/widgets/round_back_button.dart';
 import '../../shared/widgets/task_card.dart';
 import '../task_detail/task_detail_sheet.dart';
 
 /// Layar Jadwal — CalendarGrid card (paper: white r24 p4, label bulan +
 /// chevron), legend, label hari terpilih, list task hari itu (proto).
 class JadwalScreen extends StatefulWidget {
-  const JadwalScreen({super.key, required this.onBack});
+  const JadwalScreen({super.key, this.onBack});
 
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
 
   @override
   State<JadwalScreen> createState() => _JadwalScreenState();
@@ -56,15 +55,9 @@ class _JadwalScreenState extends State<JadwalScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                RoundBackButton(onTap: widget.onBack),
-                const SizedBox(width: 12),
-                const Text(
-                  'Jadwal',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                ),
-              ],
+            const Text(
+              'Jadwal',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 20),
             _CalendarCard(

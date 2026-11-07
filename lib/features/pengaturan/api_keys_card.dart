@@ -3,13 +3,15 @@ library;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/ai/gemini_service.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/widgets/toast.dart';
+import 'api_key_rows.dart';
 
 /// Kartu API Key Gemini — prototype (211–220, 596–606): judul + tombol
-/// Tambah, deskripsi fallback key, baris "Key N" + input + hapus,
-/// tombol Simpan API Keys (flutter_secure_storage, MASTER_SPEC §6).
+/// Tambah, deskripsi fallback key, baris "Key N" + input + validasi online + hapus,
+/// tombol Simpan API Keys (hanya simpan jika valid, MASTER_SPEC §6).
 class ApiKeysCard extends StatefulWidget {
   const ApiKeysCard({super.key});
 
@@ -19,6 +21,9 @@ class ApiKeysCard extends StatefulWidget {
 
 class _ApiKeysCardState extends State<ApiKeysCard> {
   List<TextEditingController> _controllers = [];
+  final Map<int, bool?> _validationStatus = {};
+  final Map<int, bool> _checkingRow = {};
+  bool _saving = false;
 
   /// Key tersamar default (enh F6: jangan plain di layar), toggle mata
   /// untuk melihat saat mengetik/cek.
@@ -45,10 +50,11 @@ class _ApiKeysCardState extends State<ApiKeysCard> {
     for (final c in _controllers) {
       c.dispose();
     }
-    setState(
-      () =>
-          _controllers = [for (final k in keys) TextEditingController(text: k)],
-    );
+    setState(() {
+      _controllers = [for (final k in keys) TextEditingController(text: k)];
+      _validationStatus.clear();
+      _checkingRow.clear();
+    });
   }
 
   void _addRow() => setState(() {
@@ -57,20 +63,87 @@ class _ApiKeysCardState extends State<ApiKeysCard> {
 
   void _removeRow(int i) => setState(() {
     _controllers.removeAt(i).dispose();
+    _validationStatus.remove(i);
+    _checkingRow.remove(i);
   });
+
+  void _onTextChange(int i) {
+    if (_validationStatus[i] != null) {
+      setState(() => _validationStatus[i] = null);
+    }
+  }
+
+  Future<bool> _validateSingleKey(int i, {bool showToast = true}) async {
+    final key = _controllers[i].text.trim();
+    if (key.isEmpty) {
+      if (showToast) showAppToast(context, 'Key ${i + 1} masih kosong');
+      return false;
+    }
+
+    setState(() => _checkingRow[i] = true);
+    final res = await GeminiService.validateApiKey(key);
+    if (!mounted) return false;
+
+    setState(() {
+      _checkingRow[i] = false;
+      _validationStatus[i] = res.isValid;
+    });
+
+    if (showToast) {
+      if (res.isValid) {
+        showAppToast(context, 'Key ${i + 1} valid & aktif! ✅');
+      } else {
+        showAppToast(
+          context,
+          'Key ${i + 1} tidak valid: ${res.error ?? 'Ditolak Google'} ❌',
+        );
+      }
+    }
+    return res.isValid;
+  }
 
   Future<void> _save() async {
     final keys = _controllers.map((c) => c.text.trim()).toList();
-    final filled = keys.where((k) => k.isNotEmpty).length;
-    if (filled == 0) {
+    final filledIndices = <int>[];
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].isNotEmpty) filledIndices.add(i);
+    }
+
+    if (filledIndices.isEmpty) {
       showAppToast(context, 'Belum ada key yang diisi');
       return;
     }
+
+    setState(() => _saving = true);
+
+    // Validasi semua key yang diisi secara online ke Google Gemini
+    for (final idx in filledIndices) {
+      // Jika belum divalidasi atau invalid, cek sekarang
+      if (_validationStatus[idx] != true) {
+        final ok = await _validateSingleKey(idx, showToast: false);
+        if (!ok) {
+          if (mounted) {
+            setState(() => _saving = false);
+            final keyText = keys[idx];
+            showAppToast(
+              context,
+              'Key ${idx + 1} ($keyText) tidak valid! Periksa kembali key kamu ❌',
+            );
+          }
+          return;
+        }
+      }
+    }
+
+    if (!mounted) return;
     await context.read<SettingsProvider>().saveApiKeys(keys);
     if (!mounted) return;
-    // Rebuild controller dari versi yang sudah di-trim.
+    setState(() => _saving = false);
     _rebuild([for (final t in keys) t]);
-    showAppToast(context, '$filled API key tersimpan (secure storage) 🔐');
+    showAppToast(
+      context,
+      '${filledIndices.length} API key valid & tersimpan di Secure Storage 🔐',
+    );
   }
 
   @override
@@ -135,23 +208,27 @@ class _ApiKeysCardState extends State<ApiKeysCard> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Key 1 limit → app otomatis pakai key 2, dst. Variasikan dari '
-            'akun Google berbeda biar free tier dobel.',
+            'Key 1 limit → app otomatis pakai key 2, dst. Key divalidasi ke Google '
+            'sebelum disimpan agar AI siap digunakan.',
             style: TextStyle(fontSize: 12, color: AppColors.muted),
           ),
           const SizedBox(height: 16),
           for (var i = 0; i < _controllers.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),
-            _KeyRow(
+            KeyRow(
               index: i,
               controller: _controllers[i],
               obscure: !_visible,
+              isValid: _validationStatus[i],
+              isChecking: _checkingRow[i] ?? false,
+              onCheck: () => _validateSingleKey(i),
+              onChanged: () => _onTextChange(i),
               onDelete: _removeRow,
             ),
           ],
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _save,
+            onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
               textStyle: const TextStyle(
                 fontSize: 13,
@@ -159,80 +236,25 @@ class _ApiKeysCardState extends State<ApiKeysCard> {
               ),
               minimumSize: const Size.fromHeight(48),
             ),
-            child: const Text('Simpan API Keys'),
+            child: _saving
+                ? const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: AppColors.surface,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Text('Memeriksa Validitas Key…'),
+                    ],
+                  )
+                : const Text('Simpan API Keys'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _KeyRow extends StatelessWidget {
-  const _KeyRow({
-    required this.index,
-    required this.controller,
-    required this.obscure,
-    required this.onDelete,
-  });
-
-  final int index;
-  final TextEditingController controller;
-  final bool obscure;
-  final ValueChanged<int> onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 44,
-          child: Text(
-            'Key ${index + 1}',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.muted,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            obscureText: obscure,
-            // Boleh copy walau tersamar (paste ke form lain saat ganti HP).
-            enableInteractiveSelection: true,
-            decoration: const InputDecoration(hintText: 'masukkan API key…'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        _DeleteKeyButton(onTap: () => onDelete(index)),
-      ],
-    );
-  }
-}
-
-class _DeleteKeyButton extends StatelessWidget {
-  const _DeleteKeyButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: const SizedBox(
-          width: 36,
-          height: 36,
-          child: Icon(
-            Icons.delete_outline_rounded,
-            size: 14,
-            color: AppColors.danger,
-          ),
-        ),
       ),
     );
   }

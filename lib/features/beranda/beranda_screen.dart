@@ -14,6 +14,7 @@ import '../task_detail/task_detail_sheet.dart';
 import '../task_form/task_form_sheet.dart';
 import '../notifikasi/notifikasi_screen.dart';
 import 'category_row.dart';
+import 'category_tasks_screen.dart';
 
 /// TabFilter HomeTabs pill aktif primary (DESIGN §5).
 final _homeTabLabels = {
@@ -30,12 +31,11 @@ final _homeTabTitles = {
   TaskTab.done: 'Belum ada yang selesai',
 };
 
-/// Beranda — DESIGN.md §5 #2: header (logo, +, bel+badge), SummaryCard,
-/// 4 kartu kategori, HomeTabs, list TaskCard.
+/// Beranda — DESIGN.md §5 #2: header (logo, bel+badge), SummaryCard,
+/// 4 kartu kategori, HomeTabs, list TaskCard. Tombol tambah cukup dari
+/// kartu (Tulis Manual) & FAB AI — tidak ada tombol + dobel di header.
 class BerandaScreen extends StatefulWidget {
-  const BerandaScreen({super.key, required this.onAskAI});
-
-  final VoidCallback onAskAI;
+  const BerandaScreen({super.key});
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
@@ -69,6 +69,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
+  void _openCategory(Category category) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CategoryTasksScreen(category: category),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<TaskProvider>();
@@ -85,20 +93,15 @@ class _BerandaScreenState extends State<BerandaScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(
-              onAdd: () => _openForm(),
-              onNotif: _bell,
-              hasUnread: unread,
-            ),
+            _Header(onNotif: _bell, hasUnread: unread),
             const SizedBox(height: 12),
             SummaryCard(
               total: provider.tasks.length,
               done: doneCount,
-              onAskAI: widget.onAskAI,
               onManual: () => _openForm(),
             ),
             const SizedBox(height: 16),
-            CategoryRow(tasks: provider.tasks),
+            CategoryRow(tasks: provider.tasks, onCategoryTap: _openCategory),
             const SizedBox(height: 24),
             _HomeTabs(active: _tab, onPick: (t) => setState(() => _tab = t)),
             const SizedBox(height: 12),
@@ -129,13 +132,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({
-    required this.onAdd,
-    required this.onNotif,
-    required this.hasUnread,
-  });
+  const _Header({required this.onNotif, required this.hasUnread});
 
-  final VoidCallback onAdd;
   final VoidCallback onNotif;
   final bool hasUnread;
 
@@ -196,31 +194,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Semantics(
-          identifier: 'header_add_task_btn',
-          button: true,
-          label: 'Tambah tugas',
-          child: Tooltip(
-            message: 'Tambah manual',
-            child: InkWell(
-              onTap: onAdd,
-              customBorder: const CircleBorder(),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: circle,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.add,
-                  size: 17,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 16),
         Semantics(
           identifier: 'header_notif_btn',
           button: true,
@@ -294,7 +268,9 @@ class _HomeTabs extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: tab == active ? AppColors.primary : AppColors.surface,
+                    color: tab == active
+                        ? AppColors.primary
+                        : AppColors.surface,
                     borderRadius: AppRadius.chip,
                   ),
                   child: Text(
@@ -302,7 +278,9 @@ class _HomeTabs extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: tab == active ? AppColors.surface : AppColors.muted,
+                      color: tab == active
+                          ? AppColors.surface
+                          : AppColors.muted,
                     ),
                   ),
                 ),

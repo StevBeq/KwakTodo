@@ -9,10 +9,12 @@ import '../../shared/widgets/task_card.dart' show categoryIcon;
 
 /// Baris 4 kartu kategori — design-reference.html home baris 119–122:
 /// kartu pastel rounded-2xl, ikon + label + jumlah tugas (warna ink kategori).
+/// Dapat diketuk untuk membuka halaman khusus kategori (FR-1 & feedback user).
 class CategoryRow extends StatelessWidget {
-  const CategoryRow({super.key, required this.tasks});
+  const CategoryRow({super.key, required this.tasks, this.onCategoryTap});
 
   final List<Task> tasks;
+  final ValueChanged<Category>? onCategoryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,9 @@ class CategoryRow extends StatelessWidget {
             child: _CategoryCard(
               category: category,
               count: tasks.where((t) => t.category == category).length,
+              onTap: onCategoryTap != null
+                  ? () => onCategoryTap!(category)
+                  : null,
             ),
           ),
         ],
@@ -33,52 +38,64 @@ class CategoryRow extends StatelessWidget {
 }
 
 class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.category, required this.count});
+  const _CategoryCard({
+    required this.category,
+    required this.count,
+    this.onTap,
+  });
 
   final Category category;
   final int count;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final (bg, ink) = categoryColorPairs[category]!;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: bg,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(categoryIcon(category), size: 18, color: ink),
-          const SizedBox(height: 6),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              categoryLabels[category]!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.0,
-                fontWeight: FontWeight.w700,
-                color: ink,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(categoryIcon(category), size: 18, color: ink),
+              const SizedBox(height: 6),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  categoryLabels[category]!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.0,
+                    fontWeight: FontWeight.w700,
+                    color: ink,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 2),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.0,
+                  fontWeight: FontWeight.w600,
+                  color: ink.withValues(alpha: .7),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            '$count',
-            style: TextStyle(
-              fontSize: 11,
-              height: 1.0,
-              fontWeight: FontWeight.w600,
-              color: ink.withValues(alpha: .7),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

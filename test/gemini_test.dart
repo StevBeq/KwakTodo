@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import 'package:todo_list/core/ai/ai_result.dart';
+import 'package:todo_list/core/ai/gemini_service.dart';
 import 'package:todo_list/core/ai/key_rotator.dart';
 import 'package:todo_list/core/ai/task_draft_json.dart';
 import 'package:todo_list/core/domain/models.dart';
@@ -118,4 +121,48 @@ void main() {
       expect(r, isA<ErrResult<String>>());
     });
   });
+
+  group(
+    'GeminiService.validateApiKey — verifikasi online key sebelum simpan',
+    () {
+      test('key kosong langsung invalid', () async {
+        final res = await GeminiService.validateApiKey('');
+        expect(res.isValid, isFalse);
+        expect(res.error, contains('tidak boleh kosong'));
+      });
+
+      test('HTTP 200 -> valid', () async {
+        final client = MockClient((req) async {
+          expect(req.headers['x-goog-api-key'], 'AIzaSyValidKey');
+          return http.Response(
+            '{"models": [{"name": "models/gemini-pro"}]}',
+            200,
+          );
+        });
+
+        final res = await GeminiService.validateApiKey(
+          'AIzaSyValidKey',
+          client: client,
+        );
+        expect(res.isValid, isTrue);
+        expect(res.error, isNull);
+      });
+
+      test('HTTP 400 -> invalid dengan pesan Google', () async {
+        final client = MockClient((req) async {
+          return http.Response(
+            '{"error": {"code": 400, "message": "API key not valid."}}',
+            400,
+          );
+        });
+
+        final res = await GeminiService.validateApiKey(
+          'AIzaSyInvalidKey',
+          client: client,
+        );
+        expect(res.isValid, isFalse);
+        expect(res.error, 'API key not valid.');
+      });
+    },
+  );
 }

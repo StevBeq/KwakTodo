@@ -6,19 +6,18 @@ import '../theme/app_theme.dart';
 import '../../core/utils/format.dart';
 
 /// SummaryCard Beranda — DESIGN.md §5: overline tanggal, H2 jumlah,
-/// progress bar putih, tombol Tanya AI + Manual (reference Beranda card).
+/// progress bar putih, tombol Manual (Tanya AI cukup lewat FAB bottom nav,
+/// jangan dobel di header kartu).
 class SummaryCard extends StatelessWidget {
   const SummaryCard({
     super.key,
     required this.total,
     required this.done,
-    required this.onAskAI,
     required this.onManual,
   });
 
   final int total;
   final int done;
-  final VoidCallback onAskAI;
   final VoidCallback onManual;
 
   @override
@@ -77,34 +76,14 @@ class SummaryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Semantics(
-                  identifier: 'summary_ask_ai_btn',
-                  button: true,
-                  child: _SummaryButton(
-                    label: 'Tanya AI',
-                    icon: Icons.auto_awesome,
-                    filled: true,
-                    onTap: onAskAI,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Semantics(
-                  identifier: 'summary_manual_btn',
-                  button: true,
-                  child: _SummaryButton(
-                    label: 'Manual',
-                    icon: Icons.add,
-                    filled: false,
-                    onTap: onManual,
-                  ),
-                ),
-              ),
-            ],
+          Semantics(
+            identifier: 'summary_manual_btn',
+            button: true,
+            child: _SummaryButton(
+              label: 'Tulis Manual',
+              icon: Icons.add,
+              onTap: onManual,
+            ),
           ),
         ],
       ),
@@ -116,53 +95,42 @@ class _SummaryButton extends StatelessWidget {
   const _SummaryButton({
     required this.label,
     required this.icon,
-    required this.filled,
     required this.onTap,
   });
 
   final String label;
   final IconData icon;
-  final bool filled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: filled ? AppColors.surface : Colors.transparent,
+      color: AppColors.surface,
       clipBehavior: Clip.antiAlias,
       shape: const StadiumBorder(),
       child: InkWell(
         onTap: onTap,
         child: Container(
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: ShapeDecoration(
             shape: const StadiumBorder(),
-            color: filled
-                ? AppColors.surface
-                : AppColors.surface.withValues(alpha: .25),
+            color: AppColors.surface,
           ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 14,
-                  color: filled ? AppColors.primaryDark : AppColors.surface,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14, color: AppColors.primaryDark),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: filled ? AppColors.primaryDark : AppColors.surface,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

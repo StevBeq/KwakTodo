@@ -220,38 +220,43 @@ class _AiCaptureSheetState extends State<AiCaptureSheet> {
           color: AppColors.surface,
           borderRadius: AppRadius.sheet,
         ),
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 48,
-                  height: 6,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.grabber,
-                    borderRadius: AppRadius.chip,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 6,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.grabber,
+                        borderRadius: AppRadius.chip,
+                      ),
+                    ),
                   ),
-                ),
+                  const CaptureHead(),
+                  const SizedBox(height: 12),
+                  ModeTabs(active: _mode, onPick: _pickMode),
+                  const SizedBox(height: 20),
+                  _pane(),
+                  if (_drafts != null) DraftPreviewList(drafts: _drafts!),
+                  const SizedBox(height: 20),
+                  _parseButton(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Data dikirim ke Google Gemini untuk diproses.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 10, color: AppColors.muted),
+                  ),
+                ],
               ),
-              const CaptureHead(),
-              const SizedBox(height: 12),
-              ModeTabs(active: _mode, onPick: _pickMode),
-              const SizedBox(height: 20),
-              _pane(),
-              if (_drafts != null) DraftPreviewList(drafts: _drafts!),
-              const SizedBox(height: 20),
-              _parseButton(),
-              const SizedBox(height: 8),
-              const Text(
-                'Data dikirim ke Google Gemini untuk diproses.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10, color: AppColors.muted),
-              ),
-            ],
+            ),
           ),
         ),
       ),

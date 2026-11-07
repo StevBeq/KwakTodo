@@ -28,8 +28,7 @@ class SettingsProvider extends ChangeNotifier {
 
   // reminder (penyimpanan DB; penjadwalan aktual = fase F5)
   bool _remEnabled = false;
-  int _remDays = 2; // H-N
-  int _remHour = 8; // pukul NN:00
+  List<RemRule> _remRules = const [RemRule(unit: RemUnit.day, n: 2)];
 
   /// Diregistrasi main.dart: dipanggil tiap konfigurasi reminder berubah
   /// agar semua jadwal dipasang ulang (RULES §4.4).
@@ -43,18 +42,24 @@ class SettingsProvider extends ChangeNotifier {
   bool get aiNoticeSeen => _aiNoticeSeen ?? false;
 
   bool get remEnabled => _remEnabled;
-  int get remDays => _remDays;
-  int get remHour => _remHour;
+  List<RemRule> get remRules => List.unmodifiable(_remRules);
 
-  // opsi dropdown reminder (prototype select remDays/remHour)
-  static const remDaysOptions = [1, 2, 3, 7];
+  /// Batas aturan di UI (scheduler punya slot cadangan lebih besar).
+  static const maxRules = 8;
+
+  /// Opsi pemilih jam (aturan mode hari) — dari prototype select remHour.
   static const remHourOptions = [4, 6, 8, 10, 12, 20, 21, 22];
+
+  /// Halaman reminder dianggap sederhana bila isinya satu aturan.
+  /// Nama aturan gabungan utk baris ringkas di halaman Pengaturan.
+  String get remRulesLabel => _remRules.isEmpty
+      ? 'Belum ada aturan'
+      : _remRules.map((r) => r.label).join('  ·  ');
 
   List<String> get apiKeys => List.unmodifiable(_apiKeys);
 
   /// Konfigurasi reminder saat ini (dipakai scheduler — RULES §4.4).
-  RemCfg get remCfg =>
-      RemCfg(enabled: _remEnabled, leadDays: _remDays, hour: _remHour);
+  RemCfg get remCfg => RemCfg(enabled: _remEnabled, rules: _remRules);
 
   /// API key pertama non-kosong (dipakai modul AI fase F4).
   String get activeApiKey {
@@ -68,11 +73,30 @@ class SettingsProvider extends ChangeNotifier {
     _onboarded = await _db.settingsDao.getBool('onboarded');
     _aiNoticeSeen = await _db.settingsDao.getBool('ai_notice_seen');
     _remEnabled = await _db.settingsDao.getBool('rem_enabled');
-    _remDays = await _db.settingsDao.getInt('rem_days', orDefault: 2);
-    _remHour = await _db.settingsDao.getInt('rem_hour', orDefault: 8);
+    _remRules = await _loadRules();
     await loadApiKeys();
     _loaded = true;
     notifyListeners();
+  }
+
+  /// Muat aturan dari app_settings (JSON list of RemRule); kosong →
+  /// migrasi satu-atrur dari setting lama rem_days/rem_hour (v1).
+  Future<List<RemRule>> _loadRules() async {
+    final raw = await _db.settingsDao.getRaw('rem_rules');
+    if (raw != null) {
+      try {
+        final decoded = (jsonDecode(raw) as List<dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .map(RemRule.fromJson)
+            .toList();
+        if (decoded.isNotEmpty) return decoded;
+      } on FormatException {
+        // raw rusak → jatuh ke migrasi data lama di bawah.
+      }
+    }
+    final legacyDays = await _db.settingsDao.getInt('rem_days', orDefault: 2);
+    final legacyHour = await _db.settingsDao.getInt('rem_hour', orDefault: 8);
+    return [RemRule(unit: RemUnit.day, n: legacyDays, hour: legacyHour)];
   }
 
   Future<void> markOnboarded() async {
@@ -87,21 +111,35 @@ class SettingsProvider extends ChangeNotifier {
     await _db.settingsDao.setBool('ai_notice_seen', true);
   }
 
-  /// Simpan konfigurasi reminder (toggle + H-N + jam sekaligus).
-  Future<void> setReminder({
-    required bool enabled,
-    required int days,
-    required int hour,
-  }) async {
+  /// Toggle reminder utama.
+  Future<void> setReminderEnabled(bool enabled) async {
     _remEnabled = enabled;
-    _remDays = days;
-    _remHour = hour;
     notifyListeners();
     await _db.settingsDao.setBool('rem_enabled', enabled);
-    await _db.settingsDao.setInt('rem_days', days);
-    await _db.settingsDao.setInt('rem_hour', hour);
     onReminderChanged?.call();
   }
+
+  /// Tambah aturan reminder (H-N hari@jam / H-N jam) + reschedule.
+  Future<void> addRemRule(RemRule rule) async {
+    if (_remRules.length >= maxRules) return;
+    _remRules = [..._remRules, rule];
+    notifyListeners();
+    await _persistRules();
+    onReminderChanged?.call();
+  }
+
+  /// Hapus aturan indeks [i] + reschedule (slot ikut di-cancel).
+  Future<void> removeRemRule(int index) async {
+    _remRules = [..._remRules]..removeAt(index);
+    notifyListeners();
+    await _persistRules();
+    onReminderChanged?.call();
+  }
+
+  Future<void> _persistRules() => _db.settingsDao.setRaw(
+    'rem_rules',
+    jsonEncode([for (final r in _remRules) r.toJson()]),
+  );
 
   /// Muat API key dari keystore (jsonEncode array — MASTER_SPEC §6).
   Future<void> loadApiKeys() async {

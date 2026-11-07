@@ -69,6 +69,9 @@ AGENTS.md
 design-reference.html
 /Logo.webp
 
+# Video experiment (Remotion node project, besar & dev-only)
+/remotion/
+
 # Symbolication & Obfuscation
 app.*.symbols
 app.*.map.json

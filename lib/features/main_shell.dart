@@ -43,10 +43,10 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      BerandaScreen(onAskAI: _askAI),
-      JadwalScreen(onBack: () => _go(0)),
-      StatistikScreen(onBack: () => _go(0)),
-      PengaturanScreen(onBack: () => _go(0)),
+      const BerandaScreen(),
+      const JadwalScreen(),
+      const StatistikScreen(),
+      const PengaturanScreen(),
     ];
 
     return Scaffold(

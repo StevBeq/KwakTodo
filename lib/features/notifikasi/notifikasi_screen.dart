@@ -28,8 +28,8 @@ class NotifikasiScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        bottom: false,
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
             child: StreamBuilder<List<db.Notification>>(
@@ -61,44 +61,44 @@ class NotifikasiScreen extends StatelessWidget {
                               width: 2,
                             ),
                             minimumSize: const Size.fromHeight(48),
-                        shape: const StadiumBorder(),
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
+                            shape: const StadiumBorder(),
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      if (list.isEmpty)
+                        const EmptyState(
+                          icon: Icons.notifications_off_rounded,
+                          title: 'Inbox kosong',
+                          subtitle: 'Notifikasi reminder akan muncul di sini.',
+                        )
+                      else
+                        ...List.generate(
+                          list.length,
+                          (i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _NotifCard(
+                              item: list[i],
+                              now: now,
+                              onRead: () => notif.markRead(list[i].id),
+                              onDelete: () => notif.deleteItem(list[i].id),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  if (list.isEmpty)
-                    const EmptyState(
-                      icon: Icons.notifications_off_rounded,
-                      title: 'Inbox kosong',
-                      subtitle: 'Notifikasi reminder akan muncul di sini.',
-                    )
-                  else
-                    ...List.generate(
-                      list.length,
-                      (i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _NotifCard(
-                          item: list[i],
-                          now: now,
-                          onRead: () => notif.markRead(list[i].id),
-                          onDelete: () => notif.deleteItem(list[i].id),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
-    ),
-  ),
-);
-}
+    );
+  }
 }
 
 class _Header extends StatelessWidget {
