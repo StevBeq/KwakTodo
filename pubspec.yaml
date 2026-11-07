@@ -40,6 +40,9 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
+  # Ikon launcher dari logo Kwak (sekali jalan: dart run flutter_launcher_icons)
+  flutter_launcher_icons: ^0.14.3
+
   # — codegen (drift) —
   build_runner: 2.4.15
   drift_dev: ^2.14.0
@@ -49,3 +52,14 @@ flutter:
 
   assets:
     - assets/images/
+
+# Ikon launcher KwakTodo — jalan sekali: dart run flutter_launcher_icons
+# (RULES: dependencies minimal; ini dev-only, tidak masuk bundle runtime).
+flutter_launcher_icons:
+  image_path: "assets/images/logo.webp"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FDF1E3"
+  adaptive_icon_foreground: "assets/images/logo.webp"
+  adaptive_icon_foreground_padding: 0.12
